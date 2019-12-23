@@ -17,12 +17,12 @@ OPTIMIZE	   = -Os
 DEFS		   =
 LIBS		   =
 PROGRAMMER = avrispmkII
-PROG_TARGET = t84
+PROG_TARGET = t85
 PROG_PORT = usb
 # You should not have to change anything below here.
 CC			 = avr-gcc
 # Override is only needed by avr-lib build system.
-override CFLAGS		= -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS)
+override CFLAGS		= -std=c11 -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS)
 override LDFLAGS	   = -Wl,-Map,$(PRG).map
 OBJCOPY		= avr-objcopy
 OBJDUMP		= avr-objdump

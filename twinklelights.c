@@ -21,6 +21,7 @@
 #include <avr/power.h>
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
+#include <avr/wdt.h>
 #include <util/delay.h>
 
 #define LATCH_OUT   0
@@ -37,6 +38,18 @@
 
 enum Mode{NORM, SPEC};
 
+#define NUM_FRAMES 8
+uint8_t pattern[NUM_FRAMES] = {
+  1 << 0,
+  1 << 1,
+  1 << 2,
+  1 << 3,
+  1 << 4,
+  1 << 5,
+  1 << 6,
+  1 << 7,
+};
+
 void blink_lights(uint8_t *byte);
 void shuffle(uint8_t *byte);
 void go2sleep(void);
@@ -45,6 +58,7 @@ void setup();
 void pulse(uint8_t pin);
 void switch_mode(enum Mode mode);
 void send_config(uint32_t config);
+void show_pattern();
 
 ISR(WDT_vect){
   WDTCR |= (1 << WDIE) | (1 << WDE);
@@ -56,15 +70,18 @@ int main(){
   while(1){
     blink_lights(&seed);
     go2sleep();
+    show_pattern();
+    go2sleep();
   }
 }
 
 void blink_lights(uint8_t *byte){
+  shift_8_bits(0);
   PORTB &= ~(1 << OUT_ENA);
-  for(uint8_t i = 0; i < 8; i++){
+  for(uint8_t i = 0; i < NUM_FRAMES; i++){
     shuffle(byte);
     shift_8_bits(*byte);
-    _delay_ms(20);
+    _delay_ms(200);
   }
   PORTB |= (1 << OUT_ENA);
 }
@@ -78,7 +95,7 @@ void shuffle(uint8_t *byte){
 }
 
 void go2sleep(){
-  asm("wdr");
+  wdt_reset();
   WDTCR |= (1 << WDIE) | (1 << WDE);
   sleep_enable();
   sleep_cpu();
@@ -145,4 +162,14 @@ void shift_8_bits(uint8_t byte){
   }
   // latch output
   pulse(LATCH_OUT);
+}
+
+void show_pattern(){
+  shift_8_bits(0);
+  PORTB &= ~(1 << OUT_ENA);
+  for(uint8_t i = 0; i < NUM_FRAMES; i++){
+    shift_8_bits(pattern[i]);
+    _delay_ms(200);
+  }
+  PORTB |= (1 << OUT_ENA);
 }
